@@ -1,13 +1,12 @@
 package com.example.model
 
-import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
 @IgnoreExtraProperties
 data class UserProfile(
-    @DocumentId val userId: String = "",
+    val userId: String = "",
     val displayName: String = "",
     val phoneNumber: String = "",
     val email: String = "",
@@ -19,7 +18,7 @@ data class UserProfile(
 
 @IgnoreExtraProperties
 data class CloudChat(
-    @DocumentId val id: String = "",
+    val id: String = "",
     val participants: List<String> = emptyList(),
     val participantPhones: List<String> = emptyList(),
     val participantNames: Map<String, String> = emptyMap(),
@@ -32,7 +31,7 @@ data class CloudChat(
 
 @IgnoreExtraProperties
 data class CloudMessage(
-    @DocumentId val id: String = "",
+    val id: String = "",
     val chatId: String = "",
     val senderId: String = "",
     val senderName: String = "",

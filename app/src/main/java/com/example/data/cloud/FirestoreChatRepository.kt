@@ -51,7 +51,12 @@ class FirestoreChatRepository(private val context: Context) {
                     return@addSnapshotListener
                 }
                 if (snapshot != null && snapshot.exists()) {
-                    val profile = snapshot.toObject(UserProfile::class.java)
+                    val profile = try {
+                        snapshot.toObject(UserProfile::class.java)?.copy(userId = snapshot.id)
+                    } catch (e: Exception) {
+                        Log.e("FirestoreRepo", "Error deserializing user profile", e)
+                        null
+                    }
                     trySend(profile)
                 } else {
                     trySend(null)
@@ -86,7 +91,11 @@ class FirestoreChatRepository(private val context: Context) {
         val cleaned = phone.replace(" ", "").replace("-", "").trim()
         val snapshot = db.collection("users").get().await()
         for (doc in snapshot.documents) {
-            val profile = doc.toObject(UserProfile::class.java)
+            val profile = try {
+                doc.toObject(UserProfile::class.java)?.copy(userId = doc.id)
+            } catch (e: Exception) {
+                null
+            }
             if (profile != null) {
                 val candidateCleaned = profile.phoneNumber.replace(" ", "").replace("-", "").trim()
                 if (candidateCleaned == cleaned || profile.phoneNumber.contains(cleaned) || cleaned.contains(candidateCleaned)) {
@@ -113,7 +122,13 @@ class FirestoreChatRepository(private val context: Context) {
                     Log.e("FirestoreRepo", "Error observing chats", error)
                     return@addSnapshotListener
                 }
-                val chats = snapshot?.documents?.mapNotNull { it.toObject(CloudChat::class.java) } ?: emptyList()
+                val chats = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        doc.toObject(CloudChat::class.java)?.copy(id = doc.id)
+                    } catch (e: Exception) {
+                        null
+                    }
+                } ?: emptyList()
                 // Sort client-side by updatedAt descending
                 val sorted = chats.sortedByDescending { it.updatedAt?.time ?: 0L }
                 trySend(sorted)
@@ -131,7 +146,13 @@ class FirestoreChatRepository(private val context: Context) {
                     Log.e("FirestoreRepo", "Error observing messages for $chatId", error)
                     return@addSnapshotListener
                 }
-                val messages = snapshot?.documents?.mapNotNull { it.toObject(CloudMessage::class.java) } ?: emptyList()
+                val messages = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        doc.toObject(CloudMessage::class.java)?.copy(id = doc.id)
+                    } catch (e: Exception) {
+                        null
+                    }
+                } ?: emptyList()
                 val sorted = messages.sortedBy { it.createdAt?.time ?: 0L }
                 trySend(sorted)
             }
